@@ -29,8 +29,13 @@
 #include <sstream>
 #include <fstream>
 #include <algorithm>
+
+#if defined(__linux__)
 #include <sys/resource.h>
 #include <unistd.h>
+#else
+#include <Windows.h>
+#endif
 
 using std::stringstream;
 using std::string;
@@ -148,7 +153,20 @@ Scene::Stats
 Scene::stats()
 {
     Stats stats;
-    int nproc = sysconf(_SC_NPROCESSORS_ONLN);
+    int nproc = 0;
+    // if on linux get active processors else on windows get dwNumberOfProcessors.
+    // dwNumberOfProcessors returns all threads, so if you have 6 cores & 12 threads it will return 12
+    #ifdef __linux__
+
+    nproc = sysconf(_SC_NPROCESSORS_ONLN);
+
+    #else
+
+    SYSTEM_INFO sysinfo;
+    GetSystemInfo( &sysinfo );
+    nproc = sysinfo.dwNumberOfProcessors;
+
+    #endif
 
     stats.average_frame_time = realTime_.elapsed() / currentFrame_;
     stats.average_user_time = userTime_.elapsed() / currentFrame_;
@@ -353,16 +371,18 @@ Scene::update_elapsed_times()
 {
     realTime_.lastUpdate = Util::get_timestamp_us() / 1000000.0;
 
-    struct rusage usage;
-    getrusage(RUSAGE_SELF, &usage);
-    userTime_.lastUpdate = usage.ru_utime.tv_sec +
-                           usage.ru_utime.tv_usec / 1000000.0;
-    systemTime_.lastUpdate = usage.ru_stime.tv_sec +
-                             usage.ru_stime.tv_usec / 1000000.0;
+   // Don't know how to replace posix getrusage() on windows builds at the moment.
 
-    double uptime, idle;
-    std::ifstream ifs("/proc/uptime");
-    ifs >> uptime >> idle;
-    if (!ifs.fail())
-        idleTime_.lastUpdate = idle;
+    // struct rusage usage;
+    // getrusage(RUSAGE_SELF, &usage);
+    // userTime_.lastUpdate = usage.ru_utime.tv_sec +
+    //                        usage.ru_utime.tv_usec / 1000000.0;
+    // systemTime_.lastUpdate = usage.ru_stime.tv_sec +
+    //                          usage.ru_stime.tv_usec / 1000000.0;
+
+    // double uptime, idle;
+    // std::ifstream ifs("/proc/uptime");
+    // ifs >> uptime >> idle;
+    // if (!ifs.fail())
+    //     idleTime_.lastUpdate = idle;
 }
