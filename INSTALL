@@ -34,3 +34,19 @@ $ ./waf
 To install use:
 
 $ ./waf install --destdir=DESTDIR
+
+
+To build on windows with WAF system:
+
+python waf configure --with-flavors=dispmanx-glesv2,win32-gl,win32-glesv2... [--data-path=DATA_PATH --prefix=build/src ]
+
+To build use:
+
+python waf
+
+You will also have to create a folder in build/src called share and another in share called
+glmark2 then copy the folders in "data" folder from root to build/src/share/glmark2 so that
+the built executable can find the files.
+
+
+
