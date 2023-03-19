@@ -373,16 +373,19 @@ Scene::update_elapsed_times()
 
    // Don't know how to replace posix getrusage() on windows builds at the moment.
 
-    // struct rusage usage;
-    // getrusage(RUSAGE_SELF, &usage);
-    // userTime_.lastUpdate = usage.ru_utime.tv_sec +
-    //                        usage.ru_utime.tv_usec / 1000000.0;
-    // systemTime_.lastUpdate = usage.ru_stime.tv_sec +
-    //                          usage.ru_stime.tv_usec / 1000000.0;
+#if defined(__linux__) || defined(__APPLE__)
+    struct rusage usage;
+    getrusage(RUSAGE_SELF, &usage);
+    userTime_.lastUpdate = usage.ru_utime.tv_sec +
+                           usage.ru_utime.tv_usec / 1000000.0;
+    systemTime_.lastUpdate = usage.ru_stime.tv_sec +
+                             usage.ru_stime.tv_usec / 1000000.0;
 
-    // double uptime, idle;
-    // std::ifstream ifs("/proc/uptime");
-    // ifs >> uptime >> idle;
-    // if (!ifs.fail())
-    //     idleTime_.lastUpdate = idle;
+    double uptime, idle;
+    std::ifstream ifs("/proc/uptime");
+    ifs >> uptime >> idle;
+    if (!ifs.fail())
+        idleTime_.lastUpdate = idle;
+
+#endif
 }
